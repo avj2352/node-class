@@ -1,0 +1,12 @@
+{
+  "name": "node-master-class",
+  "version": "1.0.0",
+  "description": "- **Presenter**: Ryan Dhal\r - [Exercise Files](https://github.com/pirple/The-NodeJS-Master-Class.git)\r - [Master Class Link](https://pirple.thinkific.com/)\r - Username: _pramod.jingade@gmail.com_\r - Password: _zuko2352_",
+  "main": "index.js",
+  "scripts": {
+    "start": "node my-exercise/http-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
