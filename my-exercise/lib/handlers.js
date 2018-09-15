@@ -124,7 +124,7 @@ handlers._users.get = (data,callback)=>{
                 delete data.hashPassword;
                 callback(200,data);
             } else {
-                callback(400, {});
+                callback(404, {});
             }
         })
     } else {
@@ -254,7 +254,20 @@ handlers._tokens.post = (data,callback)=>{
 
 // Tokens - GET
 handlers._tokens.get = (data,callback)=>{
-
+    console.log('Data Query string is: ', data.queryStringObject);
+    const tokenId = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
+    if(tokenId){
+        _data.read('tokens',tokenId,(err,tokenData)=>{
+            if(!err && tokenData){
+                console.log('Data exists: ', tokenData);
+                callback(200,tokenData);
+            } else {
+                callback(404, {});
+            }
+        })
+    } else {
+        callback(400,{'Error':'Missing required field'});
+    }
 };
 
 // Tokens - PUT
