@@ -1,11 +1,21 @@
 //Inbuilt module of Node - http
-let http = require('http');
-let url = require('url');
+const http = require('http');
+const url = require('url');
 // string_decoder has a field called String Decoder
-let StringDecoder = require('string_decoder').StringDecoder;
-
+const StringDecoder = require('string_decoder').StringDecoder;
+// const _data = require('./lib/data'); // Require our file storage data
+const handlers = require('./lib/handlers');
+const helpers = require('./lib/helpers');
 
 const PORT = 5000;
+
+
+
+//TESTING
+//@FIXME delete this
+// _data.delete('test','newFile',(err)=>{
+// //     console.log('This was the error', err);    
+// })
 
 
 //Server would respond to any type of request with a simple hello world
@@ -48,12 +58,13 @@ let server = http.createServer((req,res)=>{
         let chosenHandler = typeof(router[trimmedPath]) !== 'undefined'  ? router[trimmedPath] : router.notFound;
 
         //Construct the data object, to send to the handler
+        //We now want the payload to be instead of the plain buffer, helpers.buffer
         let data  = {
             'trimmedPath' : trimmedPath,
             'queryStringObject': queryStringObject,
             'method': method,
             'headers': headers,
-            'payload': buffer
+            'payload': helpers.parseJsonToObject(buffer)
         };
 
         /**
@@ -94,23 +105,9 @@ server.listen(PORT,()=>{
 	console.log('Server listening at:', server.address().port);
 });
 
-// Define our handlers
-let handlers = {};
-
-
-handlers.sample = function(data,callback){
-    // Step 1: Callback a HTTP status code and a payload - which is an object
-    callback(406, {'name': 'sample handler'});
-    
-};
-
-// Handle 404 - not found
-handlers.notFound = function(data, callback){
-    // Step 1: Callback a HTTP status code and a payload - which is an object
-    callback(404);
-};
-
 // Define a request router 
 let router = {
-    'sample': handlers.sample
+    'ping': handlers.ping,
+    'sample': handlers.sample,
+    'users': handlers.users
 };
