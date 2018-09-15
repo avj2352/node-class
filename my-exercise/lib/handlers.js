@@ -253,6 +253,8 @@ handlers._tokens.post = (data,callback)=>{
 };
 
 // Tokens - GET
+// Required fields - QueryParam - id
+// Optional fields - none
 handlers._tokens.get = (data,callback)=>{
     console.log('Data Query string is: ', data.queryStringObject);
     const tokenId = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false;
@@ -271,8 +273,37 @@ handlers._tokens.get = (data,callback)=>{
 };
 
 // Tokens - PUT
+// Required fields - QueryParams - id, extend
+// Optional field - none
 handlers._tokens.put = (data,callback)=>{
-
+    console.log('Data Payload is: ', data.payload);
+    const tokenId = typeof(data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+    const extend = typeof(data.payload.extend) == 'boolean' && data.payload.extend == true ? data.payload.extend : false;
+    if(tokenId && extend){
+        // Lookup the token
+        _data.read('tokens', tokenId, (err,tokenData)=>{
+            if(!err && tokenData){
+                //Check to see if the token already hasn't expired
+                if(tokenData.expires > Date.now()){
+                    // Set the expirtion time to an hour from now
+                    tokenData.expires = Date.now() + 1000*60*60;
+                    _data.update('tokens', tokenId, tokenData, (err)=>{
+                        if(!err){
+                            callback(200, {});
+                        } else {
+                            callback(500, {'Error':'Error updating token'});
+                        }
+                    })
+                } else {
+                    callback(400, {'Error': 'Token has already expired and cannot be extended'});
+                }
+            } else {
+                callback(400, {'Error': 'Token ID doesn\'t exists'});
+            }
+        })
+    } else {
+        callback(400, {'Error': 'Missing required field(s) / Invalid field(s)'});
+    }
 };
 
 // Tokens - DELETE
