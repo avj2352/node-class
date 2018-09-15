@@ -253,7 +253,7 @@ handlers._tokens.post = (data,callback)=>{
 };
 
 // Tokens - GET
-// Required fields - QueryParam - id
+// Required fields - QUERYPARAM - id
 // Optional fields - none
 handlers._tokens.get = (data,callback)=>{
     console.log('Data Query string is: ', data.queryStringObject);
@@ -273,7 +273,7 @@ handlers._tokens.get = (data,callback)=>{
 };
 
 // Tokens - PUT
-// Required fields - QueryParams - id, extend
+// Required fields - PAYLOAD - id, extend
 // Optional field - none
 handlers._tokens.put = (data,callback)=>{
     console.log('Data Payload is: ', data.payload);
@@ -307,8 +307,29 @@ handlers._tokens.put = (data,callback)=>{
 };
 
 // Tokens - DELETE
+// Required data - Query Param - id,
+// Optional data - none
 handlers._tokens.delete = (data,callback)=>{
-
+    console.log('Data Query string is: ', data.queryStringObject);
+    const id = typeof(data.queryStringObject.id) == 'string' && data.queryStringObject.id.trim().length == 20 ? data.queryStringObject.id.trim() : false; 
+    if(id){
+        _data.read('tokens',id,(err,data)=>{
+            if(!err && data){
+                console.log('Data exists: ', data);                
+                _data.delete('tokens',id,(err)=>{
+                    if(!err){
+                        callback(200,{});
+                    } else {
+                        callback(500, {'Error':'Could not delete the token'});
+                    }
+                });                
+            } else {
+                callback(400, {'Error':'Couldnot find the specified token id'});
+            }
+        });
+    } else {
+        callback(400,{'Error':'Missing required field'});
+    }
 };
 
 
