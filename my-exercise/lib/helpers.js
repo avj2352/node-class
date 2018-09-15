@@ -40,6 +40,29 @@ helpers.parseJsonToObject = (inputBuffer)=>{
     }
 };
 
+/**
+ * Create a Random String based on the length provided
+ * @param number strLength 
+ * @returns string random-string
+ */
+helpers.createRandomString = (strLength)=>{
+    strLength = typeof(strLength) == 'number' && strLength > 0 ? strLength : false;
+    if(strLength){
+        const possibleCharacters = 'abcdfefghijklmnopqrstuvwxyz0123456789';
+        //Start preparing the randomString;
+        let tempStr = '';
+        for(let i = 1; i <= strLength; i++){
+            //Get a randomString from possibleCharacters
+            randomCharacter = possibleCharacters.charAt(Math.floor(Math.random()*possibleCharacters.length));
+            //Append to tempStr
+            tempStr += randomCharacter;
+        }
+        return tempStr;
+    } else {
+        return false;
+    }
+};
+
 
 // export the module
 module.exports = helpers;

@@ -9,10 +9,24 @@
 ---
 
 # How Node processes JS - *Event Loops*
+> - Node is built using C++ application and it embeds the V8 Engine
+> - It primarily can be broken down into two main modules
+> - 1. A Script Processor - Script processor which tells node which file to run eg: `node index.js`
+> - 2. A REPL - Read, Eval, Print, Loop - It is an interactive JS runtime.
+
+When a Node Application is executing a piece of code, the following happen:
+- Any synchronous code, Node will encounter it will immediately execute and move to the next line.
+- Any asynchornous code, Node adds it to the `queue` / `todo list` and moves forward.
+- Non-blocking tasks get added to the todoList, and Node processes them whenever it can.
 - The `event loop` is continually checking if there's any new for Node JS to do.
 - Each task is `blocking` if its blocking all the resources and tasks that are in pipeline - while it's executing the current task.
 - Node JS  is a single threaded - Node's event loop and `non blocking` IO doesn't allow Node to do multiple things at one time...*they just allow Node to schedule things later*.
 - Non blocking IO allows the app to do other things while it's sitting around waiting.
+
+| Blocking IO | Non Blocking |
+|:------------|-------------:|
+| Synchronous Code | Async Code, Promises, ..etc., |
+| When processing a request, web applications are actually sitting around doing nothing, waiting for response | Node schedules such requests to be done `later` and goes on executing |
 
 ---
 
@@ -848,3 +862,8 @@ let router = {
     'users': handlers.users
 };
 ```
+
+# Tokens
+
+Tokens / Authentication Layer / Session for user to store using his - phonenumber, password.
+

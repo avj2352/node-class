@@ -27,7 +27,7 @@ handlers.notFound = (data, callback)=>{
     callback(404);
 };
 
-
+//Route definition - USERS
 handlers.users = (data,callback)=>{
     // for this route we wont accept any other methods other than below
     const acceptableMethods = ['post','get','put','delete'];
@@ -39,11 +39,25 @@ handlers.users = (data,callback)=>{
     
 };
 
+//Route definition - TOKENS
+handlers.tokens = (data,callback)=>{
+    const acceptableMethods = ['post','get','put','delete'];
+    if(acceptableMethods.indexOf(data.method) > -1){
+        handlers._tokens[data.method](data,callback); // Call by passing the http-servers data and chosenHandler function
+    }else { 
+        callback(405); //HTTP - method not allowed
+    }
+};
+
 //Container for user submethod
 handlers._users = {};
+handlers._tokens = {};
 
 
-// Users - POST
+/**
+ * User SERVICE - CRUD
+*/
+
 // Required data: firstName, lastName, phone, password, tosAgreement
 // Optional data: none
 handlers._users.post = (data,callback)=>{
@@ -192,6 +206,65 @@ handlers._users.delete = (data,callback)=>{
     } else {
         callback(400,{'Error':'Missing required field'});
     }
+};
+
+/**
+ * Token SERVICE - CRUD
+*/
+
+// Tokens - POST
+// Required data - PAYLOAD - phone and password
+// Optional data - none
+handlers._tokens.post = (data,callback)=>{
+    const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;        
+    const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+    if(phone && password){
+        //Look up the user who matches the phone number        
+        _data.read('users',phone,(err,userData)=>{
+            if(!err && userData){
+                console.log('User Data exists: ', userData);
+                //Hash the sent password and compare it with userData.hashPassword
+                const hashPass = helpers.hash(password);
+                if(userData.hashPassword == hashPass){
+                    console.log('Password has been validated');
+                    // If Valid - create a new token with a random name, set expiration date 1 hour in the future
+                    let tokenId = helpers.createRandomString(20);
+                    let expires = Date.now() + 1000*60*60;
+                    const tokenObj = {'phone': phone, 'tokenId': tokenId, 'expires':expires};
+                    //Store the token
+                    _data.create('tokens',tokenId, tokenObj,(err)=>{
+                        if(!err){
+                            callback(200, tokenObj);
+                        } else {
+                            callback(500, {'Error':'Error storing the token object'});
+                        }
+                    });
+
+                } else {
+                    callback( 400, {'Error':'Invalid Password provided'});
+                }
+            } else {
+                callback( 400, {'Error':'Could not find the specified user'});
+            }
+        });
+    } else {
+        callback(400, {'Error':'Missing required fields'});
+    }
+};
+
+// Tokens - GET
+handlers._tokens.get = (data,callback)=>{
+
+};
+
+// Tokens - PUT
+handlers._tokens.put = (data,callback)=>{
+
+};
+
+// Tokens - DELETE
+handlers._tokens.delete = (data,callback)=>{
+
 };
 
 
