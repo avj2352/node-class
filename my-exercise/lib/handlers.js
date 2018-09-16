@@ -49,9 +49,21 @@ handlers.tokens = (data,callback)=>{
     }
 };
 
+
+//Route definition - CHECKS
+handlers.tokens = (data,callback)=>{
+    const acceptableMethods = ['post','get','put','delete'];
+    if(acceptableMethods.indexOf(data.method) > -1){
+        handlers._checks[data.method](data,callback); // Call by passing the http-servers data and chosenHandler function
+    }else { 
+        callback(405); //HTTP - method not allowed
+    }
+};
+
 //Container for user submethod
 handlers._users = {};
 handlers._tokens = {};
+handlers._checks = {};
 
 
 /**
@@ -111,22 +123,32 @@ handlers._users.post = (data,callback)=>{
 
 // Users - GET
 // Required data : Request Param - phone
-// TODO: Only let authenticated users access their own object and not others
-handlers._users.get = (data,callback)=>{
+// COMPLETED: Only let authenticated users access their own object and not others
+handlers._users.get = (data,callback)=>{    
     console.log('Data Query string is: ', data.queryStringObject);
     const phone = typeof(data.queryStringObject.phone) == 'string' && data.queryStringObject.phone.trim().length == 10 ? data.queryStringObject.phone.trim() : false; 
     if(phone){
-        _data.read('users',phone,(err,data)=>{
-            if(!err && data){
-                console.log('Data exists: ', data);
-                //FIXME: Move the below line of code as part of the data.js
-                // let parsedData = JSON.parse(data);
-                delete data.hashPassword;
-                callback(200,data);
+        //Now check if the get method as a headers object
+        console.log('Header params: ', data.headers);
+        const tokenId = typeof(data.headers.token) == 'string' && data.headers.token.trim().length == 20 ? data.headers.token.trim() : false;
+        //Verify that the given token from the headers is valid for the phone number
+        handlers._tokens.verifyToken(tokenId, phone, (tokenIsValid)=>{
+            if(tokenIsValid){
+                _data.read('users',phone,(err,data)=>{
+                    if(!err && data){
+                        console.log('Data exists: ', data);
+                        //FIXME: Move the below line of code as part of the data.js
+                        // let parsedData = JSON.parse(data);
+                        delete data.hashPassword;
+                        callback(200,data);
+                    } else {
+                        callback(404, {});
+                    }
+                });
             } else {
-                callback(404, {});
+                callback(403, {'Error': 'Missing requried token in header / token invalid'});
             }
-        })
+        });        
     } else {
         callback(400,{'Error':'Missing required field'});
     }
@@ -332,6 +354,27 @@ handlers._tokens.delete = (data,callback)=>{
     }
 };
 
+
+/**
+ * Create a General purpose function to check if a given token id is currently valid for a given user
+ * @param string token id
+ * @param string phone 
+ * @param Function callback 
+ */
+handlers._tokens.verifyToken = (id, phone, callback)=>{
+    //Lookup the token first
+    _data.read('tokens', id, (err, tokenData)=>{
+        if(!err && tokenData){
+            if(tokenData.phone == phone && tokenData.expires > Date.now()){
+                callback(true);
+            } else {
+                callback(false);
+            }
+        } else {
+            callback(false);
+        }
+    });
+};
 
 //Finally - export the handlers module
 module.exports = handlers;
