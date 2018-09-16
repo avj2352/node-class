@@ -6,6 +6,7 @@
 //  Dependencies
 const _data = require('./data'); // Require our file storage data
 const helpers = require('./helpers');
+const config = require('./config');
 
 // Define the handlers
 let handlers = {};
@@ -51,7 +52,8 @@ handlers.tokens = (data,callback)=>{
 
 
 //Route definition - CHECKS
-handlers.tokens = (data,callback)=>{
+handlers.checks = (data,callback)=>{
+    console.log('Inside the TOKEN router');
     const acceptableMethods = ['post','get','put','delete'];
     if(acceptableMethods.indexOf(data.method) > -1){
         handlers._checks[data.method](data,callback); // Call by passing the http-servers data and chosenHandler function
@@ -358,21 +360,72 @@ handlers._tokens.delete = (data,callback)=>{
 // Required Parameters - protocol, url, method, success, timeouts 
 // Optional Parameters - none
 // Enforce the 5 check limit
-handlers._check.post = (data, callback) => {
+handlers._checks.post = (data, callback) => {
     //Validate all the inputs
+    console.log('Inside the CHECKS POST');
     const protocol = typeof(data.payload.protocol) == 'string' && ['https','http'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
     const url = typeof(data.payload.url) == 'string' && data.payload.url.trim().length > 0 ? data.payload.url.trim() : false;
     const method = typeof(data.payload.method) == 'string' && ['post','get', 'put', 'delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
     const success = typeof(data.payload.success) == 'object' && data.payload.success instanceof Array && data.payload.success.length > 0 ? data.payload.success : false;
     const timeoutSeconds = typeof(data.payload.timeoutSeconds) == 'number' && data.payload.timeoutSeconds % 1 === 0 && data.payload.timeoutSeconds >= 1 && data.payload.timeoutSeconds <= 5 ? data.payload.timeoutSeconds : false;
 
-    if(protocol && url && method && success && timeoutSeconds){
+    if (protocol && url && method && success && timeoutSeconds) {
         // Get the token from the headers
         console.log('Header params: ', data.headers);
-        const tokenId = typeof(data.headers.token) == 'string' && data.headers.token.trim().length == 20 ? data.headers.token.trim() : false;
+        const tokenId = typeof (data.headers.token) == 'string' && data.headers.token.trim().length == 20 ? data.headers.token.trim() : false;
         //Read the token from the tokens collection and retrieve the user info
-        _data.read('tokens', tokenId, (err,userData)=>{
-            
+        _data.read('tokens', tokenId, (err, tokenData) => {
+            if (!err && tokenData) {
+                const userPhone = tokenData.phone;
+                //Lookup the user data
+                _data.read('users', userPhone, (error, userData) => {
+                    if (!error && userData) {
+                        const userChecks = typeof (userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+                        if (userChecks.length < config.maxChecks) {
+                            // Create random id for check
+                            const checkId = helpers.createRandomString(20);
+
+                            // Create check object including userPhone
+                            const checkObject = {
+                                'id': checkId,
+                                'userPhone': userPhone,
+                                'protocol': protocol,
+                                'url': url,
+                                'method': method,
+                                'successCodes': successCodes,
+                                'timeoutSeconds': timeoutSeconds
+                            };
+
+                            // Save the object
+                            _data.create('checks', checkId, checkObject, (err)=>{
+                                if (!err) {
+                                    // Add check id to the user's object
+                                    userData.checks = [...userChecks,checkId]; // ES6 way of adding to the appending an array with new element
+                                    // userData.checks.push();
+
+                                    // Save the new user data
+                                    _data.update('users', userPhone, userData, (err)=>{
+                                        if (!err) {
+                                            // Return the data about the new check
+                                            callback(200, checkObject);
+                                        } else {
+                                            callback(500, {'Error': 'Could not update the user with the new check.'});
+                                        }
+                                    });
+                                } else {
+                                    callback(500, {'Error': 'Could not create the new check'});
+                                }
+                            });
+                } else {
+                    callback(400, {'Error':`The User already has the number of maximum checks: ${config.maxChecks}`});
+                }
+            } else {
+                callback(403, {});
+            }
+                });
+            } else {
+                callback(403,{});
+            }
         });      
     } else {
         callback(400, {'Error': 'Missing requried inputs / Inputs are invalid'});
