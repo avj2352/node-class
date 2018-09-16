@@ -8,14 +8,16 @@ var environments = {};
 environments.staging = {
     port: 3000,
     envName: 'staging',
-    hashingSecret: 'thisIsASecret'
+    hashingSecret: 'thisIsASecret',
+    maxChecks: 5
 };
 
 
 environments.production = {
     port: process.env.port,
     envName: 'production',
-    hashingSecret: 'thisIsAlsoASecret'
+    hashingSecret: 'thisIsAlsoASecret',
+    maxChecks: 5
 }
 
 //Determine which environment was passed as a command line argument

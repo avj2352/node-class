@@ -203,7 +203,7 @@ handlers._users.put = (data,callback)=>{
     }
 };
 
-// Users - GET
+// Users - DELETE
 // Required data : Request Param - phone
 // TODO: Only let authenticated users delete their own object and not others
 // TODO: Clean up / delete any other data files associated with the user
@@ -354,6 +354,30 @@ handlers._tokens.delete = (data,callback)=>{
     }
 };
 
+//CHECKS - POST
+// Required Parameters - protocol, url, method, success, timeouts 
+// Optional Parameters - none
+// Enforce the 5 check limit
+handlers._check.post = (data, callback) => {
+    //Validate all the inputs
+    const protocol = typeof(data.payload.protocol) == 'string' && ['https','http'].indexOf(data.payload.protocol) > -1 ? data.payload.protocol : false;
+    const url = typeof(data.payload.url) == 'string' && data.payload.url.trim().length > 0 ? data.payload.url.trim() : false;
+    const method = typeof(data.payload.method) == 'string' && ['post','get', 'put', 'delete'].indexOf(data.payload.method) > -1 ? data.payload.method : false;
+    const success = typeof(data.payload.success) == 'object' && data.payload.success instanceof Array && data.payload.success.length > 0 ? data.payload.success : false;
+    const timeoutSeconds = typeof(data.payload.timeoutSeconds) == 'number' && data.payload.timeoutSeconds % 1 === 0 && data.payload.timeoutSeconds >= 1 && data.payload.timeoutSeconds <= 5 ? data.payload.timeoutSeconds : false;
+
+    if(protocol && url && method && success && timeoutSeconds){
+        // Get the token from the headers
+        console.log('Header params: ', data.headers);
+        const tokenId = typeof(data.headers.token) == 'string' && data.headers.token.trim().length == 20 ? data.headers.token.trim() : false;
+        //Read the token from the tokens collection and retrieve the user info
+        _data.read('tokens', tokenId, (err,userData)=>{
+            
+        });      
+    } else {
+        callback(400, {'Error': 'Missing requried inputs / Inputs are invalid'});
+    }
+}
 
 /**
  * Create a General purpose function to check if a given token id is currently valid for a given user
