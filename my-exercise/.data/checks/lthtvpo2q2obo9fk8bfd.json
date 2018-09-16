@@ -1,0 +1,9 @@
+{
+    "id": "lthtvpo2q2obo9fk8bfd",
+    "userPhone": "9632549793",
+    "protocol": "http",
+    "url": "google.com",
+    "method": "get",
+    "successCodes": [200, 201],
+    "timeoutSeconds": 3
+}
