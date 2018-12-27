@@ -3,8 +3,8 @@
 - **Presenter**: Ryan Dhal
 - [Exercise Files](https://github.com/pirple/The-NodeJS-Master-Class.git)
 - [Master Class Link](https://pirple.thinkific.com/)
-- Username: _pramod.jingade@gmail.com_
-- Password: _zuko2352_
+- Username: `pramod.jingade@gmail.com`
+- Password: `zuko2352`
 
 ---
 
@@ -866,4 +866,3 @@ let router = {
 # Tokens
 
 Tokens / Authentication Layer / Session for user to store using his - phonenumber, password.
-
