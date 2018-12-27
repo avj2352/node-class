@@ -5,6 +5,8 @@
 // Dependencies
 const crypto = require('crypto');
 const config = require('./config');
+const querystring = require('querystring');
+const https = require('https'); // Function to craft and send https request
 
 // Container for helpers 
 let helpers = {};
@@ -60,6 +62,66 @@ helpers.createRandomString = (strLength)=>{
         return tempStr;
     } else {
         return false;
+    }
+};
+
+/**
+ * Use Twilio API to send SMS
+ * @param number phone number
+ * @param string message string
+ * @param function callback
+ */
+helpers.sendTwilioSms = (phone, msg, callback)=>{
+    // Validate the parameters
+    phone = typeof(phone) == 'string' && phone.trim().length == 10 ? phone.trim() : false;
+    msg = typeof(msg) == 'string' && msg.trim().length > 10 && msg.trim().length <=1600 ? msg.trim() : false;
+    if (phone && msg) {
+        // Configure the request payload to twilio
+        const payload = {
+            'From': config.twilio.fromPhone,
+            'To' : `+91${phnoe}`,
+            'Body': msg
+        };
+
+        // Stringify the request payload
+        // We will use the querystring module instead of JSON.stringify
+        // We need the payload type to form-urlencoded
+        const stringPayload = querystring.stringify(payload);
+        const requestDetails = {
+            'protocol':'https:',
+            'hostname':'api.twilio.com',
+            'method':'POST',
+            'path':`/2010-04-01/Accounts/${config.twilio.acountSid}/Messages.json`,
+            'auth':`${config.twilio.accountSid}:${config.twilio.authToken}`,
+            'headers':{
+                'Content-Type':'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(stringPayload)
+            }
+        };
+
+        // Instantiate the requestObj
+        const req = https.request(requestDetails, (res)=>{
+            const status = res.statusCode;
+            // Callback successfully if the request went through
+            if (status == 200 || status == 201) {
+                callback(status);
+            } else {
+                callback(status, {'Error':'Twilio request'});        
+            }
+        });
+        // Bind to the error event so it doesnt get thrown
+        req.on('error', (e)=>{
+            callback(500, {'Error':e});
+        });
+
+        // Add the payload
+        req.write(stringPayload);
+
+        // Send the request
+        req.end();
+
+    } else {    
+        callback(400, {'Error':'Given parameters are missing or invalid'});
     }
 };
 

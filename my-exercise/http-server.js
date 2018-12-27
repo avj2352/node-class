@@ -12,10 +12,10 @@ const PORT = 5000;
 
 
 //TESTING
-//@FIXME delete this
-// _data.delete('test','newFile',(err)=>{
-// //     console.log('This was the error', err);    
-// })
+helpers.sendTwilioSms('4123467','Hello!', (err)=>{
+    console.log('Error was:', err);
+})
+
 
 
 //Server would respond to any type of request with a simple hello world

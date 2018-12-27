@@ -9,7 +9,12 @@ environments.staging = {
     port: 3000,
     envName: 'staging',
     hashingSecret: 'thisIsASecret',
-    maxChecks: 5
+    maxChecks: 5,
+    twilio:{
+        accountSid:'',
+        authToken:'',
+        fromPhone:'+919845111324'
+    }
 };
 
 
